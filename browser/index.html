@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>上传文件到OSS</title>
+  </head>
+  <body>
+    <div class="container">
+      <form>
+        <div class="mb-3">
+          <label for="file" class="form-label">选择文件</label>
+          <input
+            type="file"
+            class="form-control"
+            id="file"
+            name="file"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">上传</button>
+      </form>
+    </div>
+    <script type="text/javascript">
+      const form = document.querySelector("form");
+      const fileInput = document.querySelector("#file");
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        let file = fileInput.files[0];
+        let filename = fileInput.files[0].name;
+        fetch("http://localhost:3000/api/oss/signature", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const formData = new FormData();
+            formData.append("name", filename);
+            formData.append("policy", data.policy);
+            formData.append("OSSAccessKeyId", data.ossAccessKeyId);
+            formData.append("success_action_status", "200");
+            formData.append("signature", data.signature);
+            formData.append("key", filename);
+            // file必须为最后一个表单域，除file以外的其他表单域无顺序要求。
+            formData.append("file", file);
+            fetch(data.host, { method: "POST", body: formData }).then((res) => {
+              console.log(res);
+              alert("文件已上传");
+            });
+          })
+          .catch((error) => {
+            console.log(
+              "Error occurred while getting OSS upload parameters:",
+              error
+            );
+          });
+      });
+    </script>
+  </body>
+</html>
